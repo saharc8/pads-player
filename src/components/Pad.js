@@ -62,7 +62,7 @@ const Pad = ({ id, title, img_src, sample_src }) => {
         return setPlayingSamples([id]);
       }
       // add samples are clicked to the waiting list
-      console.log(id, "added to the waiting list");
+      console.log(`add ${id} to the waiting list`);
       setWaitingSamples((waitingSamples) => [...waitingSamples, id]);
       setIsPlaying(true);
     } else {
