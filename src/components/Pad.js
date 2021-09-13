@@ -3,37 +3,71 @@ import PlayerContext from "../contexts/PlayerContext";
 import Controls from "./Controls";
 
 const Pad = ({ id, title, img_src, sample_src }) => {
-  const audioEl = useRef(null); //js audio element ref
-  const [isPlaying, setIsPlaying] = useState(false); //boolean state check if somthing playing
-  const [canPlay, setCanPlay] = useState(true); //boolean state check if we can play
   const imagesPath = "./images/";
   const samplesPath = "./samples/";
+  const audioEl = useRef(null); // js audio element ref
+  const [isPlaying, setIsPlaying] = useState(false); // bollean state indicate if on play or not
 
-  const { currentlyPlaying, toogleCurrentlyPlaying } =
-    useContext(PlayerContext); //consumer
+  const {
+    playingSamples,
+    setPlayingSamples,
+    waitingSamples,
+    setWaitingSamples,
+    playAll,
+  } = useContext(PlayerContext); // consumer
 
-  // manage the view, we have 2 options:
-  // nothing playing - all buttons free
-  // one sample playing - his button become pause button, another buttons locked
+  // playing the samples
   useEffect(() => {
-    if (currentlyPlaying === id) {
+    if (playingSamples.includes(id)) {
+      console.log("playing", id, playingSamples);
       audioEl.current.play();
       setIsPlaying(true);
-      setCanPlay(true);
-    } else if (currentlyPlaying === null) {
-      audioEl.current.pause();
-      setIsPlaying(false);
-      setCanPlay(true);
     } else {
+      console.log("off", id, playingSamples);
       audioEl.current.pause();
       setIsPlaying(false);
-      setCanPlay(false);
     }
-  }, [currentlyPlaying, id]);
+  }, [playingSamples, id]);
 
-  //run the toogle function
-  const onClickPlay = () => {
-    toogleCurrentlyPlaying(id);
+  // manage remove samples from lists
+  const removeSamples = () => {
+    // remove sample from waiting list if we click pause before start playing
+    const index1 = waitingSamples.indexOf(id);
+    if (index1 !== -1) {
+      console.log(`remove ${id} from waiting list`, waitingSamples);
+      setWaitingSamples((waitingSamples) => {
+        waitingSamples.splice(index1, 1);
+        return [...waitingSamples];
+      });
+      setIsPlaying(false);
+    }
+
+    // remove sample from playing list if we click pause after start playing
+    const index2 = playingSamples.indexOf(id);
+    if (index2 !== -1) {
+      console.log(`remove ${id} from playing list`, playingSamples);
+      setPlayingSamples((playingSamples) => {
+        playingSamples.splice(index2, 1);
+        return [...playingSamples];
+      });
+    }
+  };
+
+  // manage playing state
+  const onPlay = () => {
+    // first playing, when isPlaying off and playing list is empty
+    if (!isPlaying) {
+      if (playingSamples.length === 0) {
+        console.log("playing first sample", id);
+        return setPlayingSamples([id]);
+      }
+      // add samples are clicked to the waiting list
+      console.log(id, "added to the waiting list");
+      setWaitingSamples((waitingSamples) => [...waitingSamples, id]);
+      setIsPlaying(true);
+    } else {
+      removeSamples();
+    }
   };
 
   return (
@@ -49,15 +83,15 @@ const Pad = ({ id, title, img_src, sample_src }) => {
         <img src={imagesPath + img_src} alt="cover"></img>
       </div>
       <h3 className="pad_title">{title}</h3>
-      <Controls //playing the samples and manage buttons styles
+      <Controls // trigger of playing samples and manage buttons styles
         isPlaying={isPlaying}
-        onClickPlay={onClickPlay}
-        canPlay={canPlay}
+        onPlay={onPlay}
       />
       <audio
         className="pad_audio"
         src={samplesPath + sample_src}
         ref={audioEl}
+        onEnded={playAll} // indicate if sample playing ended, and run playAll for the loop repeat. ensures that the waiting samples are played after sample ends
         controls
       ></audio>
     </div>

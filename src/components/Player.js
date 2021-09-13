@@ -3,19 +3,26 @@ import Pad from "./Pad";
 import PlayerContext from "../contexts/PlayerContext";
 
 const Player = ({ samples }) => {
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
+  // 2 lists, one holds the waiting samples (after play click), second holds the currently playing
+  const [waitingSamples, setWaitingSamples] = useState([]);
+  const [playingSamples, setPlayingSamples] = useState([]);
 
-  //toogle id between the currect playing sample
-  const toogleCurrentlyPlaying = (id) => {
-    if (currentlyPlaying === id) {
-      return setCurrentlyPlaying(null);
-    }
-    setCurrentlyPlaying(id);
+  // play the waiting samples and play again the playing samples
+  // finally reset the waiting list
+  const playAll = () => {
+    setPlayingSamples([...waitingSamples, ...playingSamples]);
+    setWaitingSamples([]);
   };
 
   return (
-    <PlayerContext.Provider
-      value={{ currentlyPlaying, toogleCurrentlyPlaying }} //provide state management for the currently playing
+    <PlayerContext.Provider // provide state management for samples
+      value={{
+        playingSamples,
+        setPlayingSamples,
+        waitingSamples,
+        setWaitingSamples,
+        playAll,
+      }}
     >
       <div className="player">
         {samples.map((sample) => (
